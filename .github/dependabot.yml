@@ -8,7 +8,7 @@ updates:
     cooldown:
       default-days: 7
     assignees:
-      - 'the3ash'
+      - 'akirousnow'
     commit-message:
       prefix: 'deps'
       prefix-development: 'dev'
@@ -71,7 +71,7 @@ updates:
     cooldown:
       default-days: 7
     assignees:
-      - 'the3ash'
+      - 'akirousnow'
     commit-message:
       prefix: 'ci'
       include: 'scope'

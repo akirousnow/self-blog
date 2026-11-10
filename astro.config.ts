@@ -15,8 +15,11 @@ import { themeConfig } from './src/config'
 import { imageConfig } from './src/utils/image-config'
 import path from 'path'
 
+const website = new URL(themeConfig.site.website)
+
 export default defineConfig({
-  site: themeConfig.site.website,
+  site: website.origin,
+  base: website.pathname === '/' ? '/' : website.pathname.replace(/\/$/, ''),
   image: {
     service: {
       entrypoint: 'astro/assets/services/sharp',

@@ -6,6 +6,7 @@ import MarkdownIt from 'markdown-it'
 import { parse as htmlParser } from 'node-html-parser'
 import sanitizeHtml from 'sanitize-html'
 import { themeConfig } from '@/config'
+import { withBase } from '@/utils/base'
 import path from 'node:path'
 
 const markdownParser = new MarkdownIt({
@@ -59,7 +60,7 @@ async function fixRelativeImagePaths(htmlContent: string, baseUrl: string, postP
           if (import.meta.env.DEV) {
             // Development environment: use relative paths
             const relativePath = resolvedPath.replace('/src/content/posts/', '/')
-            const imageUrl = new URL(relativePath, baseUrl).toString()
+            const imageUrl = new URL(withBase(relativePath), baseUrl).toString()
             img.setAttribute('src', imageUrl)
           } else {
             // Production environment: use getImage optimization
@@ -76,7 +77,7 @@ async function fixRelativeImagePaths(htmlContent: string, baseUrl: string, postP
           console.error(`[Feed] Image processing failed: ${src} -> ${resolvedPath}`, error)
           // Use original path as fallback when error occurs
           const relativePath = resolvedPath.replace('/src/content/posts/', '/')
-          const imageUrl = new URL(relativePath, baseUrl).toString()
+          const imageUrl = new URL(withBase(relativePath), baseUrl).toString()
           img.setAttribute('src', imageUrl)
         }
       } else {
@@ -84,7 +85,7 @@ async function fixRelativeImagePaths(htmlContent: string, baseUrl: string, postP
         console.warn(`[Feed] Available image modules:`, Object.keys(imagesGlob))
       }
     } else if (src.startsWith('/')) {
-      img.setAttribute('src', new URL(src, baseUrl).toString())
+      img.setAttribute('src', new URL(withBase(src), baseUrl).toString())
     }
   }
 
@@ -95,7 +96,9 @@ async function fixRelativeImagePaths(htmlContent: string, baseUrl: string, postP
  * Generate a generic Feed instance
  */
 async function generateFeedInstance(context: APIContext) {
-  const siteUrl = (context.site?.toString() || themeConfig.site.website).replace(/\/$/, '')
+  const siteUrl = new URL(import.meta.env.BASE_URL, context.site ?? new URL(themeConfig.site.website))
+    .toString()
+    .replace(/\/$/, '')
   const { title = '', description = '', author = '', language = 'en-US' } = themeConfig.site
 
   const feed = new Feed({
@@ -124,7 +127,7 @@ async function generateFeedInstance(context: APIContext) {
 
   for (const post of sortedPosts) {
     const postSlug = post.id.replace(/\.[^/.]+$/, '')
-    const postUrl = new URL(postSlug, siteUrl).toString()
+    const postUrl = new URL(`${postSlug}/`, `${siteUrl}/`).toString()
     const rawHtml = markdownParser.render(post.body || '')
     const processedHtml = await fixRelativeImagePaths(rawHtml, siteUrl, post.id)
     const cleanHtml = sanitizeHtml(processedHtml, {
